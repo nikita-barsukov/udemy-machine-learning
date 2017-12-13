@@ -1,6 +1,8 @@
 library(ggplot2)
 library(reshape2)
 library(scales)
+library(caTools)
+options(scipen=999)
 this.dir <- dirname(parent.frame(2)$ofile)
 setwd(this.dir)
 
@@ -21,53 +23,61 @@ dataset = data.frame(
   years_of_exp = experiences,
   salaries_true = salary(experiences),
   salaries_observed = abs(
-    salary(experiences) + rnorm(observations, sd = 7000) * rnorm(observations, sd = 5)
+    salary(experiences) + round(rnorm(observations, sd = 10000) * rnorm(observations, sd = 5), -2)
   )
 )
+
+pl = ggplot(data = dataset, aes(x=years_of_exp, y=salaries_observed)) +
+  geom_point(color="#855C75") + 
+  scale_x_continuous(name = "Years after graduation") +
+  scale_y_continuous(name = "Observed salary", labels = comma) +
+  ggtitle("Linear regression on noisy data from a base line", subtitle = "Random dataset generated from base line") +
+  theme_minimal()
+
+print(pl)
+  
 
 split = sample.split(dataset$salaries_observed, SplitRatio = .8)
 training_set = subset(dataset, split == TRUE)
 test_set = subset(dataset, split == FALSE)
 
+pl = ggplot() +
+  geom_point(data = dataset, aes(x=years_of_exp, y=salaries_observed, alpha = split), color="#855C75") + 
+  scale_x_continuous(name = "Years after graduation") +
+  scale_y_continuous(name = "Observed salary", labels = comma) +
+  scale_alpha_manual(labels = c("Test set", "Training set"), values = c(1, .2), name = NULL) +
+  ggtitle("Linear regression on noisy data from a base line",subtitle = "Training and test datasets") +
+  theme_minimal()
+
+print(pl)
+
 regressor = lm(salaries_observed ~ years_of_exp, data = training_set)
 
 test_set$salaries_fitted = predict(regressor, newdata = test_set)
 
-pl = ggplot() +
-  geom_point(
-    aes(test_set$years_of_exp,
-                 test_set$salaries_observed,
-                 color = "Observed salaries")
-    ) +
-  geom_point(
-    aes(
-      training_set$years_of_exp,
-      training_set$salaries_observed,
-      color = "Observed salaries"
-    ),
-    alpha = 0.2
-  ) +
+pl = pl +
   geom_line(aes(
     test_set$years_of_exp,
     predict(regressor, newdata = test_set),
-    color = "Regression line"
+    color = "Fitted line"
   ),
   size = 1) +
   geom_line(aes(test_set$years_of_exp,
                 test_set$salaries_true,
                 color = "Base line"),
             size = 1) +
-  xlab("Years of experience") +
-  ylab("Observed salary") +
   scale_colour_manual(
     name = NULL,
-    values = c("#855C75", "#855C75", "#D9AF6B"),
-    guide = guide_legend(override.aes = list(
-      linetype = c("solid", "blank", "solid"),
-      shape = c(NA, 16, NA)
-    ))
+    values = c("#855C75", "#D9AF6B")
   ) +
-  theme_minimal() +
-  ggtitle("Linear regression on noisy data from a base line", subtitle = "Points in test set are darker")
+  ggtitle("Linear regression on noisy data from a base line",subtitle = "Fitted and base lines")
 
 print(pl)
+
+r_sq_base = R.squared(test_set$salaries_observed, test_set$salaries_true)
+r_sq_fitted = R.squared(test_set$salaries_observed, test_set$salaries_fitted)
+
+residuals = data.frame(
+  base_line = test_set$salaries_true - test_set$salaries_observed,
+  fitted_line = test_set$salaries_fitted - test_set$salaries_observed
+)
