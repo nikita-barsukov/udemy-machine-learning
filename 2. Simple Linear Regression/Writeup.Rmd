@@ -1,0 +1,90 @@
+---
+title: "Simple linear regression on noisy dataset with known parameters"
+author: "Nikita Barsukov"
+date: "15 dec 2017"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(reshape2)
+library(scales)
+library(caTools)
+library(knitr)
+options(scipen=999)
+
+salary = function(experience) {
+  10000 * experience + 15500
+}
+R.squared = function(actual, predicted) {
+  1 - (sum((actual - predicted) ^ 2) / sum((actual - mean(actual)) ^ 2))
+}
+
+set.seed(2017)
+
+```
+
+# Linear regression on a noisy dataset with known parameters.
+
+----------------
+This is a first text in a series of writings for an online course "Machine Learning A-Z™: Hands-On Python & R In Data Science".
+
+----------------
+
+Most of the tutorials on linear regression 
+
+What is interesting is to see how this simple algorithm performes on a data with *known* parameters and with added random noise.
+
+I came up with this base equation that shows relationship between salary and years in job market: 
+
+$Salary = 10.000 * experience + 15.500$
+
+Then I generated 2.000 numbers for independent variable:
+
+ * uniform distribution, 
+ * between 0 and 20 inclusive,
+ * rounded to nearest decimal place.
+
+```{r}
+observations = 2000
+experiences = round(runif(observations, 0, 20), digits = 1)
+```
+
+And finally I constructed a data frame with freshly generated years of experience, salary calculated using our base formula and noisy salary: base-formula salary with added random noise.
+
+To calculate noise I multiplied two uniformly distributed variables. Both had mean 0, one had a large standard deviation (thousands). Another has single-digit standard deviation. Salary with added noise is taken module if it is less than 0 and rounded to nearest hundred.
+
+```{r}
+dataset = data.frame(
+  years_of_exp = experiences,
+  salaries_true = salary(experiences),
+  salaries_observed = abs(
+    salary(experiences) + round(rnorm(observations, sd = 10000) * rnorm(observations, sd = 5), -2)
+  )
+)
+
+```
+
+First 10 rows of our generated dataset looks like this:
+
+```{r echo=FALSE, results='asis'}
+kable(dataset[1:10,], caption = "Sample of dataset", format.args = list(decimal.mark = ",", big.mark = "."))
+
+```
+
+Let's plot our noisy dataset.
+
+```{r dataset, echo=FALSE}
+pl = ggplot(data = dataset, aes(x=years_of_exp, y=salaries_observed)) +
+  geom_point(color="#855C75") + 
+  scale_x_continuous(name = "Years after graduation") +
+  scale_y_continuous(name = "Observed salary", labels = comma) +
+  ggtitle("Linear regression on noisy data from a base line", subtitle = "Random dataset generated from base line") +
+  theme_minimal()
+
+print(pl)
+```
+
+We see a clear linear pattern albeit with a substaitial noise around base axis.
+
+Our next step is to split our dataset into training a test sets. This is a standard machine learning technique.
