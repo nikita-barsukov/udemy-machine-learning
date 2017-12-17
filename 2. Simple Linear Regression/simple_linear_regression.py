@@ -5,9 +5,8 @@ import os
 import pprint
 from tabulate import tabulate
 
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-
 
 # Setting working directory to the directory of this script
 abspath = os.path.abspath(__file__)

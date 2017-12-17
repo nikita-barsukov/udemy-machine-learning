@@ -5,7 +5,7 @@ import os
 import pprint
 
 from sklearn.preprocessing import Imputer, LabelEncoder, OneHotEncoder, StandardScaler
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 
 # Setting working directory to the directory of this script
 abspath = os.path.abspath(__file__)

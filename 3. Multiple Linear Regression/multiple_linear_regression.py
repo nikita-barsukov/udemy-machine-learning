@@ -3,9 +3,12 @@ import matplotlib.pyplot as plt
 import pandas as pd 
 import os
 import pprint
+from tabulate import tabulate
+
 
 from sklearn.preprocessing import Imputer, LabelEncoder, OneHotEncoder, StandardScaler
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
 
 # Setting working directory to the directory of this script
 abspath = os.path.abspath(__file__)
@@ -27,4 +30,14 @@ X = X[:, 1:]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
 
-pprint.pprint(X_train)
+# Training linear regression model
+regressor = LinearRegression()
+regressor.fit(X_train, y_train)
+
+y_pred = regressor.predict(X_test)
+
+pretty_matrix = np.vstack(( y_test, y_pred, 100 * (y_pred - y_test)/y_test) ).T
+
+print(tabulate(pretty_matrix, headers=["Actual profit", "Predicted profit", "Diff, %"]))
+
+
