@@ -81,3 +81,25 @@ residuals = data.frame(
   base_line = test_set$salaries_true - test_set$salaries_observed,
   fitted_line = test_set$salaries_fitted - test_set$salaries_observed
 )
+
+residuals.melt = melt(residuals)
+levels(residuals.melt$variable) = c("Base line", "Fitted line")
+
+residuals_means = data.frame(
+  variable = levels(residuals.melt$variable),
+  col_means = colMeans(residuals),
+  mean_lbls = paste("Mean error:\n", round(colMeans(residuals), digits=1))
+)
+
+pl_residuals = ggplot(data = residuals.melt) +
+  geom_histogram(aes(value, fill = variable)) +
+  geom_vline(data = residuals_means, aes(xintercept = col_means)) +
+  geom_label(data=residuals_means, aes(x = col_means-28000, y = 75, label = mean_lbls)) +
+  facet_grid(variable ~ .) +
+  scale_y_continuous(name = "Number of observations") +
+  scale_x_continuous(name = "Residual errors", labels = comma) +
+  scale_fill_manual(values = c("#855C75", "#D9AF6B"), guide=FALSE) +
+  ggtitle("Residual errors", subtitle = "Base line and fitted line vs noisy data") +
+  theme_minimal()
+
+print(pl_residuals)
