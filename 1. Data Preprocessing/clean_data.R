@@ -32,7 +32,7 @@ dataset$Purchased = factor(dataset$Purchased,
 
 set.seed(123)
 
-# Splitting to test and train
+# Splitting to test and train datasets
 split = sample.split(dataset$Purchased, SplitRatio = 0.8)
 training_set = subset(dataset, split == TRUE)
 test_set = subset(dataset, split == FALSE)
