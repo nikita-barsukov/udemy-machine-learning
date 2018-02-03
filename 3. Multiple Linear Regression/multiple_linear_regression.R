@@ -23,5 +23,5 @@ test_set = subset(dataset, split == FALSE)
 # Fitting multiple linear regression into training set
 regressor = lm(Profit ~ ., training_set)
 
-# Predicting
+# Predicting  
 y_pred = predict(regressor, newdata=test_set)
