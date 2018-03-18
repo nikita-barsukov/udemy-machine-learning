@@ -15,3 +15,14 @@ output: html_document
 * Residual errors on each step:
   * GIF of histogram
   * R^2 line chart
+  
+# Notes
+
+## Exploring dataset
+
+* ID column - remove
+* Date of purchase - may be years from building + years from renovation
+* Variable types: 
+  ** Waterfront - bool
+  ** condition, view, grade, zipcode - categorical
+  ** 

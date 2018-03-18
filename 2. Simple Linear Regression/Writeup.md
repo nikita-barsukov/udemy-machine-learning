@@ -1,31 +1,13 @@
 ---
 title: "Simple linear regression on noisy dataset with known parameters"
 author: "Nikita Barsukov"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "05 March, 2018"
 output: 
   html_document:
     keep_md: TRUE
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE)
-library(ggplot2)
-library(reshape2)
-library(scales)
-library(caTools)
-library(knitr)
-options(scipen=999)
 
-salary = function(experience) {
-  10000 * experience + 15500
-}
-R.squared = function(actual, predicted) {
-  1 - (sum((actual - predicted) ^ 2) / sum((actual - mean(actual)) ^ 2))
-}
-
-set.seed(2017)
-
-```
 
 
 ******
@@ -49,7 +31,8 @@ I generated 2.000 numbers for experience, which is an independent variable:
  * between 0 and 20 inclusive,
  * rounded to nearest decimal place.
 
-```{r}
+
+```r
 observations = 2000
 experiences = round(runif(observations, 0, 20), digits = 1)
 ```
@@ -58,7 +41,8 @@ And finally I constructed a data frame with freshly generated years of experienc
 
 To calculate noise I multiplied two uniformly distributed variables. Both had mean 0, one had a large standard deviation (thousands) and nother has single-digit standard deviation. Salary with added noise is taken module if it is less than 0 and rounded to nearest hundred.
 
-```{r}
+
+```r
 dataset = data.frame(
   years_of_exp = experiences,
   salaries_true = salary(experiences),
@@ -66,127 +50,70 @@ dataset = data.frame(
     salary(experiences) + round(rnorm(observations, sd = 10000) * rnorm(observations, sd = 5), -2)
   )
 )
-
 ```
 
 First 10 rows of our generated dataset looks like this:
 
-```{r echo=FALSE, results='asis'}
-kable(dataset[1:10,], caption = "Sample of dataset", format.args = list(decimal.mark = ".", big.mark = ","))
 
-```
+Table: Sample of dataset
+
+ years_of_exp   salaries_true   salaries_observed
+-------------  --------------  ------------------
+         18.5         200,500             197,400
+         10.7         122,500             119,900
+          9.4         109,500             110,500
+          5.8          73,500             105,100
+         15.4         169,500             183,300
+         15.5         170,500             169,100
+          0.8          23,500              26,300
+          8.7         102,500              75,000
+          9.4         109,500             142,700
+          5.5          70,500              66,900
 
 Let's plot our noisy dataset.
 
-```{r dataset, echo=FALSE}
-pl = ggplot(data = dataset, aes(x=years_of_exp, y=salaries_observed)) +
-  geom_point(color="#855C75") + 
-  scale_x_continuous(name = "Years after graduation") +
-  scale_y_continuous(name = "Observed salary", labels = comma) +
-  ggtitle("Linear regression on noisy data from a base line", subtitle = "Random dataset generated from base line") +
-  theme_minimal()
-
-print(pl)
-```
+![](Writeup_files/figure-html/dataset-1.png)<!-- -->
 
 We see a clear linear pattern albeit with a substaitial noise around base line.
 
 Our next step is to split our dataset into training a test sets. This is a standard machine learning technique: we will train our formula on training set, and will validate it on a separate subset ofour dataset.
 
-```{r}
 
+```r
 split = sample.split(dataset$salaries_observed, SplitRatio = .8)
 training_set = subset(dataset, split == TRUE)
 test_set = subset(dataset, split == FALSE)
-
 ```
 
 Our test and training datasets look like this:
 
-```{r testtrainsets, echo=FALSE}
-pl = ggplot() +
-  geom_point(data = dataset, aes(x=years_of_exp, y=salaries_observed, alpha = split), color="#855C75") + 
-  scale_x_continuous(name = "Years after graduation") +
-  scale_y_continuous(name = "Observed salary", labels = comma) +
-  scale_alpha_manual(labels = c("Test set", "Training set"), values = c(1, .2), name = NULL) +
-  ggtitle("Linear regression on noisy data from a base line",subtitle = "Training and test datasets") +
-  theme_minimal()
-
-print(pl)
-```
+![](Writeup_files/figure-html/testtrainsets-1.png)<!-- -->
 
 We now can use a classic least squares algorithmon train dataset to calculate our fitted regression line. Then we compare predicted values on test dataset using our base formula and fitted formula with generated noisy data. 
 
-```{r regression}
+
+```r
 regressor = lm(salaries_observed ~ years_of_exp, data = training_set)
 test_set$salaries_fitted = predict(regressor, newdata = test_set)
 ```
 
 
-```{r fitted_line, echo=FALSE}
-pl = pl +
-  geom_line(aes(
-    test_set$years_of_exp,
-    predict(regressor, newdata = test_set),
-    color = "Fitted line"
-  ),
-  size = 1) +
-  geom_line(aes(test_set$years_of_exp,
-                test_set$salaries_true,
-                color = "Base line"),
-            size = 1) +
-  scale_colour_manual(
-    name = NULL,
-    values = c("#855C75", "#D9AF6B")
-  ) +
-  ggtitle("Linear regression on noisy data from a base line",subtitle = "Fitted and base lines")
-
-print(pl)
-```
+![](Writeup_files/figure-html/fitted_line-1.png)<!-- -->
 
 Remarkably base line and fitted line are very close to each other. This is how they compare (two lines and generated points in test dataset):
 
-```{r echo = FALSE}
-residuals = data.frame(
-  base_line = test_set$salaries_true - test_set$salaries_observed,
-  fitted_line = test_set$salaries_fitted - test_set$salaries_observed
-)
-```
+
 
 
 Parameter | Base line | Fitted line |
 ----------|-----------|-------------|
-Coefficients |$Salary = 10,000 * experience + 15,500$ | $Salary = `r regressor$coefficients[2]` * experience + `r regressor$coefficients[1]`$
-R-squared coefficient | `r  R.squared(test_set$salaries_observed, test_set$salaries_true)` | `r R.squared(test_set$salaries_observed, test_set$salaries_fitted)`|
-Mean residual error | `r round(colMeans(residuals), digits = 1)[1]` | `r round(colMeans(residuals), digits = 1)[2]` |
+Coefficients |$Salary = 10,000 * experience + 15,500$ | $Salary = 9195.652862 * experience + 27196.525798$
+R-squared coefficient | 0.5381738 | 0.5523087|
+Mean residual error | -6400.5 | -2977.3 |
 
 And this is how residual errors for two lines look on a histogram: 
 
-```{r errors_hist, echo = FALSE, message=FALSE}
-
-residuals.melt = melt(residuals)
-levels(residuals.melt$variable) = c("Base line", "Fitted line")
-
-residuals_means = data.frame(
-  variable = levels(residuals.melt$variable),
-  col_means = colMeans(residuals),
-  mean_lbls = paste("Mean error:\n", round(colMeans(residuals), digits=1))
-)
-
-pl_residuals = ggplot(data = residuals.melt) +
-  geom_histogram(aes(value, fill = variable)) +
-  geom_vline(data = residuals_means, aes(xintercept = col_means)) +
-  geom_label(data=residuals_means, aes(x = col_means-30000, y = 75, label = mean_lbls)) +
-  facet_grid(variable ~ .) +
-  scale_y_continuous(name = "Number of observations") +
-  scale_x_continuous(name = "Residual errors", labels = comma) +
-  scale_fill_manual(values = c("#855C75", "#D9AF6B"), guide=FALSE) +
-  ggtitle("Residual errors", subtitle = "Base line and fitted line vs noisy data") +
-  theme_minimal()
-
-print(pl_residuals)
-
-```
+![](Writeup_files/figure-html/errors_hist-1.png)<!-- -->
 
 By this time it is already clear that our fitted line is very close to a base line. R^2^ coefficient, mean residual error and error distribution -- all are very close to each other. 
 
