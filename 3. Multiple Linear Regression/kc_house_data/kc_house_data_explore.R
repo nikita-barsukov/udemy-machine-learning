@@ -1,7 +1,6 @@
 library(ggplot2)
 library(dplyr)
 library(scales)
-library(caTools)
 library(knitr)
 library(readr)
 library(lubridate)
@@ -14,57 +13,51 @@ setwd(this.dir)
 source("kc_house_data_read.R")
 source("ggplot2_formatter.r")
 
-# Exploring: 
+# Histogram: 
 hist_threshold = 2000000
 human_usd = function(x){human_numbers(x, smbl = "$")}
 kc_house_data_hist = kc_house_data
 kc_house_data_hist$price[kc_house_data_hist$price > hist_threshold] = hist_threshold +1
 plt = ggplot(kc_house_data_hist) +
-  geom_histogram(aes(price), breaks = seq(0, 2050000, 50000)) +
-  scale_x_continuous(labels = c(human_usd(seq(0, 1800000, 200000)), "$2m+"), breaks = seq(0, 2000000, 200000)) +
-  scale_y_continuous(labels = comma) +
+  geom_histogram(aes(price), color="white", breaks = seq(0, 2050000, 50000)) +
+  geom_vline(xintercept = median(kc_house_data$price), color = "red") +
+  annotate("text", x = 475000, y = 2000, label = "Median price:\n$450K", hjust = 0) +
+  scale_x_continuous(labels = c(human_usd(seq(0, 1800000, 200000)), "$2m+"), 
+                     breaks = seq(0, 2000000, 200000), 
+                     name = "House price", 
+                     expand = c(0, 0)) +
+  scale_y_continuous(labels = comma, 
+                     name = "Houses sold", 
+                     expand = c(0, 50)) +
+  ggtitle("Distribution of house prices in Seattle area", 
+          subtitle = "Homes sold between May 2014 and May 2015, Kaggle dataset") +
   theme_minimal()
 print(plt)
 
-# ========================
-# Plotting maps with sales
+# Price vs bedrooms
+plt = ggplot(kc_house_data_bedrooms) +
+  geom_boxplot(aes(x=bedrooms, y=price), outlier.shape = NA) +
+  scale_y_continuous(labels = human_usd, 
+                     name = "House price") +
+  scale_x_discrete(labels=c("one","two","three","four","five","six"), 
+                   name = "Number of bedrooms") +
+  coord_flip(ylim = c(0, 1750000)) +
+  ggtitle("Spread of house prices in Seattle area by number of bedrooms", 
+          subtitle = "Homes sold between May 2014 and May 2015, Kaggle dataset") +
+  theme_minimal()
 
-us = c(left = -122.8, bottom = 47.2, right = -121.5, top = 47.9)
-map = get_stamenmap(us, zoom = 10, maptype = "toner-lite")
-
-plt = ggmap(map, extent="device") +
-  stat_density_2d(data = kc_house_data, aes(x=long, y=lat, fill = ..level..), geom = "polygon", alpha = .3, color = NA) +
-  scale_fill_gradient2("Houses sold", low = "white", high = "red") +
-  theme_minimal() +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank(), 
-        legend.position="none")
 print(plt)
+# price vs grade
+plt = ggplot(kc_house_data_grade) +
+  geom_boxplot(aes(x=grade, y=price), outlier.shape = NA) +
+  scale_y_continuous(labels = human_usd, 
+                     name = "House price") +
+  scale_x_discrete(name = "House grade") +
+  coord_flip(ylim = c(0, 1750000)) +
+  ggtitle("Spread of house prices in Seattle area by house grade", 
+          subtitle = "Homes sold between May 2014 and May 2015, Kaggle dataset") +
+  theme_minimal()
 
-# Removing factor levels with <100 sales
-kc_house_data_grid = kc_house_data %>% filter(grade %in% c(5,6,7,8,9,10))
-plt = ggmap(map, extent="device") +
-  stat_density_2d(data = kc_house_data_grid, aes(x=long, y=lat, fill = ..level..), geom = "polygon", alpha = .3, color = NA) +
-  scale_fill_gradient2("Houses sold", low = "white", high = "green") +
-  facet_wrap(~grade) +
-  theme_minimal() +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank(), 
-        legend.position="none")
 print(plt)
+# Price vs sq feet
 
-kc_house_data_bedrooms = kc_house_data %>% filter(bedrooms %in% c(1,2,3,4,5,6))
-plt = ggmap(map, extent="device") +
-  stat_density_2d(data = kc_house_data_bedrooms, aes(x=long, y=lat, fill = ..level..), geom = "polygon", alpha = .3, color = NA) +
-  scale_fill_gradient2("Houses sold", low = "white", high = "blue") +
-  facet_wrap(~bedrooms) +
-  theme_minimal() +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank(), 
-        legend.position="none")
-print(plt)
-
-# 
