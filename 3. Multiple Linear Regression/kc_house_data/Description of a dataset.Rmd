@@ -1,0 +1,82 @@
+---
+title: "Description of dataset"
+author: "Nikita Barsukov"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(knitr)
+library(readr)
+library(lubridate)
+library(ggmap)
+
+source("kc_house_data_read.R")
+source("ggplot2_formatter.r")
+
+```
+
+*****
+This text is a part of a series of writings where I try various regression algorithms on the same dataset. Dataset is a house prices sold in Seattle area in 2014-15. This text is about dataset itself. Other writeups in this series are about how ordinary least squares and support vector machines algorithms worked to predict prices. There is also a text about whether using robust feature selection techniques makes a difference in training a price prediction alforithm. 
+
+*****
+
+It is a good idea to get acquainted with the dataset before developing a regression model, so let's do this before getting hands dirty with actual machine learning.
+
+Original dataset contains `r comma(nrow(kc_house_data_raw))` house sales, each sale has `r comma(ncol(kc_house_data_raw))` columns. Columns are straightforward. All expected characteristics like living area, geographic coordinates of a house, zip code, year of building and renovation, and many more. 
+
+Houses in the dataset are scattered across most of King's county, where Seattle is located, but concentrated in Seattle's northern part.
+
+```{r map_all_houses}
+us = c(left = -122.8, bottom = 47.2, right = -121.5, top = 47.9)
+map = get_stamenmap(us, zoom = 11, maptype = "toner-lite")
+
+plt = ggmap(map, extent="device") +
+  scale_x_continuous(name=NULL) +
+  scale_y_continuous(name=NULL) +
+  stat_density_2d(data = kc_house_data, aes(x=long, y=lat, fill = ..level..), geom = "polygon", alpha = .3, color = NA) +
+  scale_fill_gradient2("Houses sold", low = "white", high = "red", breaks = c(4, 16),labels=c("Less","More")) +
+  theme_minimal() +
+  ggtitle("Locations of all houses sold in Seattle area", subtitle = "Kaggle dataset, May 2014 to May 2015") +
+  theme_void()
+print(plt)
+
+```
+
+Let's look at how various types of houses are distributed on a map. For example, sold houses are distributed on a map differently, depending on number of bedrooms.
+
+```{r map_by_bedrooms, fig.width=8}
+plt = ggmap(map, extent="device") +
+  scale_x_continuous(name=NULL) +
+  scale_y_continuous(name=NULL) +
+  stat_density_2d(data = kc_house_data_bedrooms, aes(x=long, y=lat, fill = ..level..), geom = "polygon", alpha = .3, color = NA) +
+  scale_fill_gradient2("Houses sold", low = "white", high = "blue", breaks = c(5, 30),labels=c("Less","More")) +
+  facet_wrap(~bedrooms) +
+  theme_minimal() +
+  ggtitle("Locations of houses sold in Seattle area", 
+          subtitle = "Breakdown by number of bedrooms. Kaggle dataset, May 2014 to May 2015") +
+  theme_void()
+print(plt)
+
+```
+
+When we look at a house grade, we also see differences in house locations:
+
+```{r map_by_grade, fig.width=8}
+plt = ggmap(map, extent="device") +
+  scale_x_continuous(name=NULL) +
+  scale_y_continuous(name=NULL) +  
+  stat_density_2d(data = kc_house_data_grade, aes(x=long, y=lat, fill = ..level..), geom = "polygon", alpha = .3, color = NA) +
+  scale_fill_gradient2("Houses sold", low = "white", high = "green", breaks = c(5, 25),labels=c("Less","More")) +
+  facet_wrap(~grade) +
+  theme_minimal() +
+  ggtitle("Locations of houses sold in Seattle area", 
+          subtitle = "Breakdown by house grade. Kaggle dataset, May 2014 to May 2015") +
+  theme_void()
+print(plt)
+
+```
+

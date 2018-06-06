@@ -52,12 +52,20 @@ plt = ggplot(kc_house_data_grade) +
   geom_boxplot(aes(x=grade, y=price), outlier.shape = NA) +
   scale_y_continuous(labels = human_usd, 
                      name = "House price") +
-  scale_x_discrete(name = "House grade") +
-  coord_flip(ylim = c(0, 1750000)) +
+  scale_x_discrete(name = NULL) +
+  coord_flip(ylim = c(0, 2000000)) +
   ggtitle("Spread of house prices in Seattle area by house grade", 
           subtitle = "Homes sold between May 2014 and May 2015, Kaggle dataset") +
   theme_minimal()
 
 print(plt)
 # Price vs sq feet
+plt = ggplot(kc_house_data) +
+  geom_point(aes(x=price, y=sqft_living), alpha = .3) +
+  scale_x_continuous(labels = human_usd, name="House price") +
+  scale_y_continuous(labels = comma, name = "Living area, sq. feet") +
+  ggtitle("House price and living area", 
+          subtitle = "Homes sold between May 2014 and May 2015 in and around Seattle, Kaggle dataset") +
+  theme_minimal()
+print(plt)
 

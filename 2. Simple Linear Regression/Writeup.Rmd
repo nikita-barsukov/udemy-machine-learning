@@ -192,4 +192,4 @@ By this time it is already clear that our fitted line is very close to a base li
 
 Another interesting thing is that fitted line has slightly better accuracy. Median error is closer to 0 for a fitted line, R^2^ is slightly larger. If you remember, I took a module if a generated data point was negative. Fitted line picked this signal, making it more accurate than base line.
 
-At the end it is remarkable that such rather simple and well-known technique from XIX century produces excellent results.
+At the end i find it remarkable that rather simple and well-known technique from XIX century produces such excellent results.

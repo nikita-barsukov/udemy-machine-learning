@@ -7,7 +7,8 @@ library(readr)
 library(lubridate)
 library(ggmap)
 
-kc_house_data = read_csv("kc_house_data.csv")
+kc_house_data_raw  = read_csv("kc_house_data.csv")
+kc_house_data = kc_house_data_raw
 kc_house_data$yr_renovated[kc_house_data$yr_renovated == 0] = NA
 
 kc_house_data$age = year(kc_house_data$date) - kc_house_data$yr_built
